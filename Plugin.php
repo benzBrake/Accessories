@@ -4,7 +4,7 @@
  *
  * @package Accessories
  * @author Ryan
- * @version 1.0.3
+ * @version 1.0.5
  * @dependence 9.9.2-*
  * @link
  *
@@ -65,6 +65,9 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
     public static function config(Typecho_Widget_Helper_Form $form)
     {
         $radio = new Typecho_Widget_Helper_Form_Element_Radio('useBuildInStat', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('使用内置统计'), _t('如果不想使用内置统计请关闭此选项'));
+        $form->addInput($radio);
+
+        $radio = new Typecho_Widget_Helper_Form_Element_Radio('hideRealPath', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('隐藏真实路径'), _t('如果使用云存储请关闭此项'));
         $form->addInput($radio);
     }
 
