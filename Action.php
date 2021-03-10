@@ -54,9 +54,16 @@ class Accessories_Action extends Typecho_Widget implements Widget_Interface_Do
                     throw new Typecho_Widget_Exception("附件文件不存在或无法读入，请与管理员联系。");
                 }
             } else {
-                $this->response->redirect(Typecho_Common::url($info['path'], $options->index), 302);
+                if (strpos($info['path'], 'http') === 0) {
+                    $this->response->redirect($info['path'], 302);
+                } else {
+                    if ($options->plugin('Accessories')->cdnDomain) {
+                        $this->response->redirect(Typecho_Common::url($info['path'], $options->plugin('Accessories')->cdnDomain), 302);
+                    } else {
+                        $this->response->redirect(Typecho_Common::url($info['path'], $options->index), 302);
+                    }
+                }
             }
-
         } else {
             throw new Typecho_Widget_Exception("附件文件不存在或无法读入，请与管理员联系。");
         }

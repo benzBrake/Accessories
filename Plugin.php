@@ -4,13 +4,14 @@
  *
  * @package Accessories
  * @author Ryan
- * @version 1.0.5
+ * @version 1.0.6
  * @dependence 9.9.2-*
  * @link
  *
  * 历史版本
  *
- * version 1.0.3 at 2020.04-14
+ * version 1.0.6 at 2021-03=03
+ * version 1.0.3 at 2020-04-14
  * 支持 EditorMD编辑器
  * 使用单独的按钮来添加附件短码
  *
@@ -69,6 +70,9 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
 
         $radio = new Typecho_Widget_Helper_Form_Element_Radio('hideRealPath', array('1' => _t('开启'), '0' => _t('关闭')), '1', _t('隐藏真实路径'), _t('如果使用云存储请关闭此项'));
         $form->addInput($radio);
+
+        $edit = new Typecho_Widget_Helper_Form_Element_Text('cdnDomain', null, null, _t('CDN域名'), _t('兼容云插件，把本地地址替换为云存储地址'));
+        $form->addInput($edit);
     }
 
     /**
