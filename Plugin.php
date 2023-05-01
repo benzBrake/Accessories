@@ -4,13 +4,14 @@
  *
  * @package Accessories
  * @author Ryan
- * @version 1.0.6
+ * @version 1.0.7
  * @dependence 9.9.2-*
- * @link
+ * @link https://doufu.ru
  *
  * 历史版本
  *
- * version 1.0.6 at 2021-03=03
+ * version 1.0.7 at 2021-05-08
+ * version 1.0.6 at 2021-03-03
  * version 1.0.3 at 2020-04-14
  * 支持 EditorMD编辑器
  * 使用单独的按钮来添加附件短码
@@ -41,6 +42,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         Typecho_Plugin::factory('admin/write-post.php')->bottom = array('Accessories_Plugin', 'bottomJS');
         Typecho_Plugin::factory('admin/write-page.php')->bottom = array('Accessories_Plugin', 'bottomJS');
         Helper::addRoute('accessories', '/accessories/[cid:digital]', 'Accessories_Action', 'action');
+        Typecho_Plugin::factory('Widget_Archive')->header = array('Accessories_Plugin', 'header');
     }
 
     /**
@@ -86,6 +88,14 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
     {}
 
     /**
+     * 插入 CSS
+     * @return void
+     */
+    public static function header() {
+        echo '<link rel="stylesheet" href="' . Helper::options()->pluginUrl . '/Accessories/style.css" />';
+    }
+
+    /**
      * 解析
      *
      * @access public
@@ -103,20 +113,18 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         if (empty($attach)) {
             return "<div><img align='absmiddle' title='Accessories' src='" . $attach_img . "' /> 附件ID错误</div>";
         }
-        $attach_date = ", 最后修改: " . date('Y-m-d H:i', $attach['modified'] + $offset);
+        $attach_date = "最后修改: " . date('Y-m-d H:i', $attach['modified'] + $offset);
         $attach_text = unserialize($attach['text']);
         $attach_size = round($attach_text['size'] / 1024, 1) . " KB";
         $attach_url = Typecho_Common::url('accessories/' . $cid, $options->index);
         if ($options->plugin('Accessories')->useBuildInStat) {
-            $attach_views = ", 下载次数: " . self::getViews($cid);
+            $attach_views = "下载次数: " . self::getViews($cid);
         } else if (isset($options->plugins['activated']['Stat'])) {
-            $attach_views = ", 下载次数: " . $attach['views'];
+            $attach_views = "下载次数: " . $attach['views'];
         } else {
             $attach_views = '';
         }
-        $text = "<div class='attachment' style='vertical-align:middle;'><img width='12px' height='12px' align='absmiddle' title='Accessories' src='" . $attach_img . "' /> <a href='" . $attach_url . "' title='点击下载' target='_blank'>" . $attach['title'] . "</a> <span class='num'> (" . $attach_size . $attach_views . $attach_date . ") </span> </div>";
-
-        return $text;
+        return "<div class='accessories-block'><div class='accessories-notice attachment' title='AccessoriesPro'>附件</div><div class='accessories-promo'></div><div class='accessories-content'><div class='accessories-filename'><div class='img' title='AccessoriesPro'></div>附件名称：". $attach['title'] ."</div><div class='accessories-filesize'><div class='img'></div>文件大小：". $attach_size ."</div><div class='accessories-count'><div class='img'></div>". $attach_views ."</div><div class='accessories-filemodified'><div class='img'></div>". $attach_date ."</div><div class='accessories-button-group'><a class='accessories-button' href='" . $attach_url . "' target='_blank'>点击下载</a></div></div></div>";
     }
 
     /**
@@ -236,14 +244,13 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
     public static function bottomJS()
     {
         $options = Typecho_Widget::widget('Widget_Options');
-        $attach_img = Typecho_Common::url('Accessories/attach.png', $options->pluginUrl);
         ?>
             <style>
                 #file-list .info {
                     position: relative;
                 }
                 #file-list li .accessories {
-                    background-image: url(<?php echo $attach_img; ?>);
+                    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFk0lEQVRYR5VXa2xURRQ+Z7puQG2i+CBakG27M7cPadQaEfGBim8wJUSNISpERUMIGtT4IhEfoEYi+oMYiY/EKComig9owFfF8FJqYkS498yWVgETiJIoorXdzphzM7e5vb273Z5/e+Y733zn3DNnZhFGaUqpNgBYDQCbiWj+KMOHwXE0BEqpKxHxE2vt8QBwhIhOGU18GrZiAVLKKbw5AJzORIi4PAiCpWmkjY2NZxeLxWmIOA0A+hCxw1q7i4j8JL4iAfl8vkkIwZvXO4LVRLQobXMp5UuIeF+JyrxNRLfF10YUUFdXd1Ymk/kYAM5xma8NgmBucoP6+vqJVVVVX8dElvo6h4UQM3zf/ynkK/cNm5ubx/X3968HgEscrj2TybTt2bOnLx7nKvRzzPclAGy01vYIIYrGmBwiLgCA5gjT19c3tqenp7ekgNbW1uOOHj3KmV/ngnb09/e3dXd3H4pvnsvlxmSz2X8jHyK+HATB/cnEWlpaTujt7d0ZibDWvqK1XlhSgFLqfQC42RFx88xOayKlVD8AZBzuRSJ6oFxVlVLM5TnM7akClFKvAcCdDnTIGNNWKBR2JImVUocB4DTnX0dEt4x0LPP5/FQhxDbGWWvfGCZASrkKEaMS8rduI6L2lM0DAFDOv4WILhtp82hdKfUjALQAwNYhAqSUTyPi4Nm21s7VWq9N2ZyrMcX5vyeiCyrdnHFKqTcBYB4A/D4oQCnFzbYxRrSIiHjkDjGlFFfjWlfC3VrrySmYUxHRC4Jga5qwmIAjcQFbouNmrV2qtV6eQszVuNX5u6qrq1s6Ozv/ieOUUtcDwAbnu4GI4kmF7tgn2BkKUEo9CgArXFabtNZhhglirsZC5zsohLjC932KY1yD8eYns98Yc3mhUOhI8PBM4WS5Cd/BfD5/rhCCHSeWCvI87xlr7eOO6IgQYo7v+0niBpd5ncOtIKIoZlCDUoorEs2WZaiUuhsA1jACEVcGQfBQQjFfvx85Hw+cOclTUVtbOz6TyWxAxFbHkzqMlFI8I1a67LfX1NRcygIGS1tVVTV57969uxMCvgWAi13QHK31h/H1pqambLFY5LLPcP7Xieiu5CfM5/PThRB8V4RmrZ2ptd6Anudts9ZOBYDfiKgm5dsfAAD2txMRN9gQk1KuQ8SbnDMV43letbX2r1jgU0T0RFgtpdR+AJiAiJ8GQXBjigDu8rEAsIqIliSq8yoA8CXDGemampqmjo6OYgqHjWX+vNb6keg3C4gWnySiZSnB4dRCxO1BEFwUrUspn0PEh91vUywWx+3bt+/PlAodQ0R+QbENS4IFHASAMwFgPRHNTiEYHM3W2k5E/MwNomgScsgEImKeIaaU6gGASc75FhHdkcSglHKX694eIqpNAnK53EnZbJabJ3yQJE0Icb7v+50pwiNeXip5V3AFornMx7AuCILuJFljY+MZxphXrbWzYms9xpj5yUHD657nbbLWXu2wvxBRLk08+/gU3MuPAwdYQkSrSoEbGhpyxWKRXze/WmsPFgqF/1Iyj58KIKKyry6ehOcJIbYDQBYAjgkhJvm+/0cpEeX8SikeMoMPEmPMmDSRcY5Qned5L1hrH3QLnxNRVL6KdUgpF/NzLAoYGBgY39XVxQ+WshYKyOfzE4QQ3wBAOMeNMdcUCoXNIwVH61LKeYjIvRTawMCA7OrqKlQSH7+O+Tn1XizoMSJ6thwJ94QxhicaPy5CK3UqSvEMaRClFA+icEQ6+woRP7DW/kBE30VOd+1eCACLAWCww621V2mtv6gk8wgzrENTRETYv/nvFSLyAOLRPMSstfdorcNbdTSWekSklDOFEAsS574U7xohxJq0YVSJkLJntKGhYaoxZhYiTrfWTuSRCwAHEHG/MeZdY0x7pc1WSsz/dKxRDlfOjJgAAAAASUVORK5CYII=);
                     width: 32px;
                     height: 32px;
                     background-size: cover;
@@ -258,6 +265,11 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
                     if (typeof postEditormd != "undefined") {
                         // 兼容 EditorMD 编辑器
                         postEditormd.insertValue(insertValue);
+                        return(false);
+                    }
+                    if (typeof XEditor != "undefined") {
+                        // 兼容 EditorMD 编辑器
+                        XEditor.replaceSelection(insertValue);
                         return(false);
                     }
                     insertField = $('#text')[0]; // Typecho 原版编辑器 Textarea
