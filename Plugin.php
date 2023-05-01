@@ -12,7 +12,7 @@
  * 历史版本
  * version 1.0.8 at 2023-05-01
  * 支持多种编辑器
- * 支持图片短代码
+ * 支持图片短代码，换域名以后再也不怕图片链接不对啦
  * version 1.0.7 at 2021-05-08
  * version 1.0.6 at 2021-03-03
  * version 1.0.3 at 2020-04-14
@@ -101,13 +101,13 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
     }
 
     /**
-     * 解析
+     * 解析附件短代码
      *
      * @access public
      * @param array $matches 解析值
      * @return string
      */
-    public static function parseCallback($matches)
+    public static function attachCallback(array $matches): string
     {
         $options = Typecho_Widget::widget('Widget_Options');
         $offset = $options->timezone - $options->serverTimezone;
@@ -133,6 +133,30 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
     }
 
     /**
+     * 解析图片短代码
+     *
+     * @param array $matches
+     * @return string
+     */
+    public static function imageCallback(array $matches): string
+    {
+        $options = Typecho_Widget::widget('Widget_Options');
+        $image = Helper::widgetById('contents', $matches[1]);
+        if (is_object($image)) {
+            $basicUrl = $options->siteUrl;
+            if ($options->plugin('Accessories')->cdnDomain) {
+                $basicUrl = $options->plugin('Accessories')->cdnDomain;
+            }
+            $url = Typecho_Common::url($image->attachment->path, $basicUrl);
+            $file = $image->attachment->name;
+            $filename = pathinfo($file, PATHINFO_FILENAME);
+            return sprintf('<img src="%s" title="%s" />', $url, $filename);
+        } else {
+            return "";
+        }
+    }
+
+    /**
      * 插件实现方法
      *
      * @access public
@@ -143,8 +167,8 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         $text = empty($lastResult) ? $text : $lastResult;
 
         if ($widget instanceof Widget_Archive || $widget instanceof Widget_Abstract_Comments) {
-            $text = preg_replace_callback("/\[attach\](\d+)\[\/attach\]/is", array('Accessories_Plugin', 'parseCallback'), $text);
-            $text = preg_replace_callback("/\[attach\](\d+)\[\/attach\]/is", array('Accessories_Plugin', 'parseCallback'), $text);
+            $text = preg_replace_callback("/\[attach\](\d+)\[\/attach\]/is", array('Accessories_Plugin', 'attachCallback'), $text);
+            $text = preg_replace_callback("/\[image\](\d+)\[\/image\]/is", array('Accessories_Plugin', 'imageCallback'), $text);
             return $text;
         } else {
             return $text;
@@ -292,7 +316,6 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
             }
 
             #file-list li .accessories {
-                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFk0lEQVRYR5VXa2xURRQ+Z7puQG2i+CBakG27M7cPadQaEfGBim8wJUSNISpERUMIGtT4IhEfoEYi+oMYiY/EKComig9owFfF8FJqYkS498yWVgETiJIoorXdzphzM7e5vb273Z5/e+Y733zn3DNnZhFGaUqpNgBYDQCbiWj+KMOHwXE0BEqpKxHxE2vt8QBwhIhOGU18GrZiAVLKKbw5AJzORIi4PAiCpWmkjY2NZxeLxWmIOA0A+hCxw1q7i4j8JL4iAfl8vkkIwZvXO4LVRLQobXMp5UuIeF+JyrxNRLfF10YUUFdXd1Ymk/kYAM5xma8NgmBucoP6+vqJVVVVX8dElvo6h4UQM3zf/ynkK/cNm5ubx/X3968HgEscrj2TybTt2bOnLx7nKvRzzPclAGy01vYIIYrGmBwiLgCA5gjT19c3tqenp7ekgNbW1uOOHj3KmV/ngnb09/e3dXd3H4pvnsvlxmSz2X8jHyK+HATB/cnEWlpaTujt7d0ZibDWvqK1XlhSgFLqfQC42RFx88xOayKlVD8AZBzuRSJ6oFxVlVLM5TnM7akClFKvAcCdDnTIGNNWKBR2JImVUocB4DTnX0dEt4x0LPP5/FQhxDbGWWvfGCZASrkKEaMS8rduI6L2lM0DAFDOv4WILhtp82hdKfUjALQAwNYhAqSUTyPi4Nm21s7VWq9N2ZyrMcX5vyeiCyrdnHFKqTcBYB4A/D4oQCnFzbYxRrSIiHjkDjGlFFfjWlfC3VrrySmYUxHRC4Jga5qwmIAjcQFbouNmrV2qtV6eQszVuNX5u6qrq1s6Ozv/ieOUUtcDwAbnu4GI4kmF7tgn2BkKUEo9CgArXFabtNZhhglirsZC5zsohLjC932KY1yD8eYns98Yc3mhUOhI8PBM4WS5Cd/BfD5/rhCCHSeWCvI87xlr7eOO6IgQYo7v+0niBpd5ncOtIKIoZlCDUoorEs2WZaiUuhsA1jACEVcGQfBQQjFfvx85Hw+cOclTUVtbOz6TyWxAxFbHkzqMlFI8I1a67LfX1NRcygIGS1tVVTV57969uxMCvgWAi13QHK31h/H1pqambLFY5LLPcP7Xieiu5CfM5/PThRB8V4RmrZ2ptd6Anudts9ZOBYDfiKgm5dsfAAD2txMRN9gQk1KuQ8SbnDMV43letbX2r1jgU0T0RFgtpdR+AJiAiJ8GQXBjigDu8rEAsIqIliSq8yoA8CXDGemampqmjo6OYgqHjWX+vNb6keg3C4gWnySiZSnB4dRCxO1BEFwUrUspn0PEh91vUywWx+3bt+/PlAodQ0R+QbENS4IFHASAMwFgPRHNTiEYHM3W2k5E/MwNomgScsgEImKeIaaU6gGASc75FhHdkcSglHKX694eIqpNAnK53EnZbJabJ3yQJE0Icb7v+50pwiNeXip5V3AFornMx7AuCILuJFljY+MZxphXrbWzYms9xpj5yUHD657nbbLWXu2wvxBRLk08+/gU3MuPAwdYQkSrSoEbGhpyxWKRXze/WmsPFgqF/1Iyj58KIKKyry6ehOcJIbYDQBYAjgkhJvm+/0cpEeX8SikeMoMPEmPMmDSRcY5Qned5L1hrH3QLnxNRVL6KdUgpF/NzLAoYGBgY39XVxQ+WshYKyOfzE4QQ3wBAOMeNMdcUCoXNIwVH61LKeYjIvRTawMCA7OrqKlQSH7+O+Tn1XizoMSJ6thwJ94QxhicaPy5CK3UqSvEMaRClFA+icEQ6+woRP7DW/kBE30VOd+1eCACLAWCww621V2mtv6gk8wgzrENTRETYv/nvFSLyAOLRPMSstfdorcNbdTSWekSklDOFEAsS574U7xohxJq0YVSJkLJntKGhYaoxZhYiTrfWTuSRCwAHEHG/MeZdY0x7pc1WSsz/dKxRDlfOjJgAAAAASUVORK5CYII=);
                 width: 32px;
                 height: 32px;
                 background-size: cover;
@@ -300,6 +323,12 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
                 cursor: pointer;
                 right: 0;
                 top: -16px;
+            }
+            #file-list li[data-image="0"] .accessories {
+                background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cGF0aCBkPSJNMTQgMTMuNVY4QzE0IDUuNzkwODYgMTIuMjA5MSA0IDEwIDRDNy43OTA4NiA0IDYgNS43OTA4NiA2IDhWMTMuNUM2IDE3LjA4OTkgOC45MTAxNSAyMCAxMi41IDIwQzE2LjA4OTkgMjAgMTkgMTcuMDg5OSAxOSAxMy41VjRIMjFWMTMuNUMyMSAxOC4xOTQ0IDE3LjE5NDQgMjIgMTIuNSAyMkM3LjgwNTU4IDIyIDQgMTguMTk0NCA0IDEzLjVWOEM0IDQuNjg2MjkgNi42ODYyOSAyIDEwIDJDMTMuMzEzNyAyIDE2IDQuNjg2MjkgMTYgOFYxMy41QzE2IDE1LjQzMyAxNC40MzMgMTcgMTIuNSAxN0MxMC41NjcgMTcgOSAxNS40MzMgOSAxMy41VjhIMTFWMTMuNUMxMSAxNC4zMjg0IDExLjY3MTYgMTUgMTIuNSAxNUMxMy4zMjg0IDE1IDE0IDE0LjMyODQgMTQgMTMuNVoiPjwvcGF0aD48L3N2Zz4=");
+            }
+            #file-list li[data-image="1"] .accessories {
+                background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cGF0aCBkPSJNMi45OTE4IDIxQzIuNDQ0MDUgMjEgMiAyMC41NTUxIDIgMjAuMDA2NlYzLjk5MzRDMiAzLjQ0NDc2IDIuNDU1MzEgMyAyLjk5MTggM0gyMS4wMDgyQzIxLjU1NiAzIDIyIDMuNDQ0OTUgMjIgMy45OTM0VjIwLjAwNjZDMjIgMjAuNTU1MiAyMS41NDQ3IDIxIDIxLjAwODIgMjFIMi45OTE4Wk0yMCAxNVY1SDRWMTlMMTQgOUwyMCAxNVpNMjAgMTcuODI4NEwxNCAxMS44Mjg0TDYuODI4NDMgMTlIMjBWMTcuODI4NFpNOCAxMUM2Ljg5NTQzIDExIDYgMTAuMTA0NiA2IDlDNiA3Ljg5NTQzIDYuODk1NDMgNyA4IDdDOS4xMDQ1NyA3IDEwIDcuODk1NDMgMTAgOUMxMCAxMC4xMDQ2IDkuMTA0NTcgMTEgOCAxMVoiPjwvcGF0aD48L3N2Zz4=");
             }
         </style>
         <script type="text/javascript">
@@ -388,7 +417,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
                     if (pp.data('image') == 0) {
                         AccFreeEditor.replaceSelection('[attach]' + pp.data('cid') + '[/attach]');
                     } else {
-                        AccFreeEditor.replaceSelection('![' + a.text() + '](' + pp.data('url') + ')');
+                        AccFreeEditor.replaceSelection('[image]' + pp.data('cid') + '[/image]');
                     }
                 });
                 Typecho.uploadComplete = function (file) {
