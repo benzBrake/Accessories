@@ -1,19 +1,22 @@
 <?php
+
 /**
  * 附件下载插件 感谢 <a href="http://www.imhan.com">Hanny</a> <a href="https://dt27.org">dt27</a>
  *
  * @package Accessories
  * @author Ryan
- * @version 1.0.7
+ * @version 1.0.8
  * @dependence 9.9.2-*
  * @link https://doufu.ru
  *
  * 历史版本
- *
+ * version 1.0.8 at 2023-05-01
+ * 支持多种编辑器
+ * 支持图片短代码
  * version 1.0.7 at 2021-05-08
  * version 1.0.6 at 2021-03-03
  * version 1.0.3 at 2020-04-14
- * 支持 EditorMD编辑器
+ * 支持 EditorMD 编辑器
  * 使用单独的按钮来添加附件短码
  *
  * version 1.0.2 at 2020-04-12
@@ -85,13 +88,15 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
      * @return void
      */
     public static function personalConfig(Typecho_Widget_Helper_Form $form)
-    {}
+    {
+    }
 
     /**
      * 插入 CSS
      * @return void
      */
-    public static function header() {
+    public static function header()
+    {
         echo '<link rel="stylesheet" href="' . Helper::options()->pluginUrl . '/Accessories/style.css" />';
     }
 
@@ -124,7 +129,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         } else {
             $attach_views = '';
         }
-        return "<div class='accessories-block'><div class='accessories-notice attachment' title='AccessoriesPro'>附件</div><div class='accessories-promo'></div><div class='accessories-content'><div class='accessories-filename'><div class='img' title='AccessoriesPro'></div>附件名称：". $attach['title'] ."</div><div class='accessories-filesize'><div class='img'></div>文件大小：". $attach_size ."</div><div class='accessories-count'><div class='img'></div>". $attach_views ."</div><div class='accessories-filemodified'><div class='img'></div>". $attach_date ."</div><div class='accessories-button-group'><a class='accessories-button' href='" . $attach_url . "' target='_blank'>点击下载</a></div></div></div>";
+        return "<div class='accessories-block'><div class='accessories-notice attachment' title='AccessoriesPro'>附件</div><div class='accessories-promo'></div><div class='accessories-content'><div class='accessories-filename'><div class='img' title='AccessoriesPro'></div>附件名称：" . $attach['title'] . "</div><div class='accessories-filesize'><div class='img'></div>文件大小：" . $attach_size . "</div><div class='accessories-count'><div class='img'></div>" . $attach_views . "</div><div class='accessories-filemodified'><div class='img'></div>" . $attach_date . "</div><div class='accessories-button-group'><a class='accessories-button' href='" . $attach_url . "' target='_blank'>点击下载</a></div></div></div>";
     }
 
     /**
@@ -138,11 +143,14 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         $text = empty($lastResult) ? $text : $lastResult;
 
         if ($widget instanceof Widget_Archive || $widget instanceof Widget_Abstract_Comments) {
-            return preg_replace_callback("/\[attach\](\d+)\[\/attach\]/is", array('Accessories_Plugin', 'parseCallback'), $text);
+            $text = preg_replace_callback("/\[attach\](\d+)\[\/attach\]/is", array('Accessories_Plugin', 'parseCallback'), $text);
+            $text = preg_replace_callback("/\[attach\](\d+)\[\/attach\]/is", array('Accessories_Plugin', 'parseCallback'), $text);
+            return $text;
         } else {
             return $text;
         }
     }
+
     /**
      * 获取浏览次数
      */
@@ -154,6 +162,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         }
         return 0;
     }
+
     /**
      * 增加浏览次数
      */
@@ -173,6 +182,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
             Typecho_Cookie::set("__contents_viewed", $vieweds);
         }
     }
+
     /**
      * 获取所有字段
      *
@@ -185,13 +195,14 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         $db = Typecho_Db::get();
         $fields = array();
         $rows = $db->fetchAll($db->select()->from('table.fields')
-                ->where('cid = ?', $cid));
+            ->where('cid = ?', $cid));
 
         foreach ($rows as $row) {
             $fields[$row['name']] = $row[$row['type'] . '_value'];
         }
         return new Typecho_Config($fields);
     }
+
     /**
      * 设置单个字段
      *
@@ -210,29 +221,40 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         }
 
         $exist = $db->fetchRow($db->select('cid')->from('table.fields')
-                ->where('cid = ? AND name = ?', $cid, $name));
+            ->where('cid = ? AND name = ?', $cid, $name));
 
         if (empty($exist)) {
             return $db->query($db->insert('table.fields')
-                    ->rows(array(
-                        'cid' => $cid,
-                        'name' => $name,
-                        'type' => $type,
-                        'str_value' => 'str' == $type ? $value : null,
-                        'int_value' => 'int' == $type ? intval($value) : 0,
-                        'float_value' => 'float' == $type ? floatval($value) : 0,
-                    )));
+                ->rows(array(
+                    'cid' => $cid,
+                    'name' => $name,
+                    'type' => $type,
+                    'str_value' => 'str' == $type ? $value : null,
+                    'int_value' => 'int' == $type ? intval($value) : 0,
+                    'float_value' => 'float' == $type ? floatval($value) : 0,
+                )));
         } else {
             return $db->query($db->update('table.fields')
-                    ->rows(array(
-                        'type' => $type,
-                        'str_value' => 'str' == $type ? $value : null,
-                        'int_value' => 'int' == $type ? intval($value) : 0,
-                        'float_value' => 'float' == $type ? floatval($value) : 0,
-                    ))
-                    ->where('cid = ? AND name = ?', $cid, $name));
+                ->rows(array(
+                    'type' => $type,
+                    'str_value' => 'str' == $type ? $value : null,
+                    'int_value' => 'int' == $type ? intval($value) : 0,
+                    'float_value' => 'float' == $type ? floatval($value) : 0,
+                ))
+                ->where('cid = ? AND name = ?', $cid, $name));
         }
     }
+
+    /**
+     * 插件是否启用
+     * @param string $pluginName
+     * @return bool
+     */
+    public static function isPluginEnabled(string $pluginName): bool
+    {
+        return array_key_exists($pluginName, Typecho_Plugin::export()['activated']);
+    }
+
     /**
      * 添加功能JS
      * 点击附件链接自动填写[attach]id[/attach]
@@ -243,86 +265,139 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
      */
     public static function bottomJS()
     {
+        $requestUri = Typecho_Request::getInstance()->getRequestUri();
         $options = Typecho_Widget::widget('Widget_Options');
-        ?>
-            <style>
-                #file-list .info {
-                    position: relative;
-                }
-                #file-list li .accessories {
-                    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFk0lEQVRYR5VXa2xURRQ+Z7puQG2i+CBakG27M7cPadQaEfGBim8wJUSNISpERUMIGtT4IhEfoEYi+oMYiY/EKComig9owFfF8FJqYkS498yWVgETiJIoorXdzphzM7e5vb273Z5/e+Y733zn3DNnZhFGaUqpNgBYDQCbiWj+KMOHwXE0BEqpKxHxE2vt8QBwhIhOGU18GrZiAVLKKbw5AJzORIi4PAiCpWmkjY2NZxeLxWmIOA0A+hCxw1q7i4j8JL4iAfl8vkkIwZvXO4LVRLQobXMp5UuIeF+JyrxNRLfF10YUUFdXd1Ymk/kYAM5xma8NgmBucoP6+vqJVVVVX8dElvo6h4UQM3zf/ynkK/cNm5ubx/X3968HgEscrj2TybTt2bOnLx7nKvRzzPclAGy01vYIIYrGmBwiLgCA5gjT19c3tqenp7ekgNbW1uOOHj3KmV/ngnb09/e3dXd3H4pvnsvlxmSz2X8jHyK+HATB/cnEWlpaTujt7d0ZibDWvqK1XlhSgFLqfQC42RFx88xOayKlVD8AZBzuRSJ6oFxVlVLM5TnM7akClFKvAcCdDnTIGNNWKBR2JImVUocB4DTnX0dEt4x0LPP5/FQhxDbGWWvfGCZASrkKEaMS8rduI6L2lM0DAFDOv4WILhtp82hdKfUjALQAwNYhAqSUTyPi4Nm21s7VWq9N2ZyrMcX5vyeiCyrdnHFKqTcBYB4A/D4oQCnFzbYxRrSIiHjkDjGlFFfjWlfC3VrrySmYUxHRC4Jga5qwmIAjcQFbouNmrV2qtV6eQszVuNX5u6qrq1s6Ozv/ieOUUtcDwAbnu4GI4kmF7tgn2BkKUEo9CgArXFabtNZhhglirsZC5zsohLjC932KY1yD8eYns98Yc3mhUOhI8PBM4WS5Cd/BfD5/rhCCHSeWCvI87xlr7eOO6IgQYo7v+0niBpd5ncOtIKIoZlCDUoorEs2WZaiUuhsA1jACEVcGQfBQQjFfvx85Hw+cOclTUVtbOz6TyWxAxFbHkzqMlFI8I1a67LfX1NRcygIGS1tVVTV57969uxMCvgWAi13QHK31h/H1pqambLFY5LLPcP7Xieiu5CfM5/PThRB8V4RmrZ2ptd6Anudts9ZOBYDfiKgm5dsfAAD2txMRN9gQk1KuQ8SbnDMV43letbX2r1jgU0T0RFgtpdR+AJiAiJ8GQXBjigDu8rEAsIqIliSq8yoA8CXDGemampqmjo6OYgqHjWX+vNb6keg3C4gWnySiZSnB4dRCxO1BEFwUrUspn0PEh91vUywWx+3bt+/PlAodQ0R+QbENS4IFHASAMwFgPRHNTiEYHM3W2k5E/MwNomgScsgEImKeIaaU6gGASc75FhHdkcSglHKX694eIqpNAnK53EnZbJabJ3yQJE0Icb7v+50pwiNeXip5V3AFornMx7AuCILuJFljY+MZxphXrbWzYms9xpj5yUHD657nbbLWXu2wvxBRLk08+/gU3MuPAwdYQkSrSoEbGhpyxWKRXze/WmsPFgqF/1Iyj58KIKKyry6ehOcJIbYDQBYAjgkhJvm+/0cpEeX8SikeMoMPEmPMmDSRcY5Qned5L1hrH3QLnxNRVL6KdUgpF/NzLAoYGBgY39XVxQ+WshYKyOfzE4QQ3wBAOMeNMdcUCoXNIwVH61LKeYjIvRTawMCA7OrqKlQSH7+O+Tn1XizoMSJ6thwJ94QxhicaPy5CK3UqSvEMaRClFA+icEQ6+woRP7DW/kBE30VOd+1eCACLAWCww621V2mtv6gk8wgzrENTRETYv/nvFSLyAOLRPMSstfdorcNbdTSWekSklDOFEAsS574U7xohxJq0YVSJkLJntKGhYaoxZhYiTrfWTuSRCwAHEHG/MeZdY0x7pc1WSsz/dKxRDlfOjJgAAAAASUVORK5CYII=);
-                    width: 32px;
-                    height: 32px;
-                    background-size: cover;
-                    position: absolute;
-                    cursor: pointer;
-                    right: 0;
-                    top: -16px;
-                }
-            </style>
-			<script type="text/javascript">
-				function insertTextAtCursor(insertValue) {
-                    if (typeof postEditormd != "undefined") {
-                        // 兼容 EditorMD 编辑器
-                        postEditormd.insertValue(insertValue);
-                        return(false);
-                    }
-                    if (typeof XEditor != "undefined") {
-                        // 兼容 EditorMD 编辑器
-                        XEditor.replaceSelection(insertValue);
-                        return(false);
-                    }
-                    insertField = $('#text')[0]; // Typecho 原版编辑器 Textarea
-					//IE 浏览器
-	            	if (document.selection) {
-	            	    insertField.focus();
-	            	    sel = document.selection.createRange();
-	            	    sel.text = insertValue;
-	            	    sel.select();
-	            	}
-	            	 //FireFox、Chrome等
-	            	else if (insertField.selectionStart || insertField.selectionStart == '0') {
-	            	    var startPos = insertField.selectionStart;
-	            	    var endPos = insertField.selectionEnd;
-	            	    // 保存滚动条
-	            	    var restoreTop = insertField.scrollTop;
-	            	    insertField.value = insertField.value.substring(0, startPos) + insertValue + insertField.value.substring(endPos, 	insertField.value.length);
-	            	    if (restoreTop > 0) {insertField.scrollTop = restoreTop;}
-	            	    insertField.selectionStart = startPos + insertValue.length;
-	            	    insertField.selectionEnd = startPos + insertValue.length;
-	            	    insertField.focus();
-	            	} else {
-	            	    insertField.value += insertValue;
-	            	    insertField.focus();
-	            	}
-				}
-				$(document).ready(function(){
-					function addInsertLink (el) {
-                        name = $('.insert', el).html();
-                        html = '<i title="<?php _e("Accessories:插入附件[");?>' + name  + ']" class="accessories" href="#"></i>';
-                        if (!($('.accessories', el).length > 0)) {
-						    $('.info', el).append(html);
-                        }
-                    }
+        if (strpos($requestUri, 'write-post.php') !== false || strpos($requestUri, 'write-page.php') !== false) {
+            $htmlSource = ob_get_contents();
+            if (self::isPluginEnabled("Handsome")) {
+                $config = Typecho_Widget::widget('Widget_Options')->plugin('Handsome');
+                $editorChoice = $config->editorChoice;
+                if ($editorChoice === "vditor") {
+                    $insertAll = 'false';
+                    $htmlSource = str_replace('document.getElementById("btn-save").onclick', 'window.vditor = vditor; document.getElementById("btn-save").onclick', $htmlSource);
 
-					$('#file-list li').each(function () {
-						addInsertLink(this);
-					});
-                    $('#file-list li .accessories').on('click', function() {
-                        var t = $(this), pp = t.parent().parent(), a = $('.insert', pp);
-					    if(pp.data('image') == 0) {
-					    	insertTextAtCursor('[attach]' + pp.data('cid') + '[/attach]');
-					    } else {
-					    	insertTextAtCursor('![' + a.text() + '](' + pp.data('url') + ')');
-					    }
+                }
+            }
+            if (self::isPluginEnabled("UEditor")) {
+                $htmlSource = str_replace("var ue1 = new baidu.editor.ui.Editor();", 'window.ue1 = new baidu.editor.ui.Editor();', $htmlSource);
+            }
+            ob_clean();
+            print $htmlSource;
+            ob_end_flush();
+        }
+        ?>
+        <style>
+            #file-list .info {
+                position: relative;
+            }
+
+            #file-list li .accessories {
+                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFk0lEQVRYR5VXa2xURRQ+Z7puQG2i+CBakG27M7cPadQaEfGBim8wJUSNISpERUMIGtT4IhEfoEYi+oMYiY/EKComig9owFfF8FJqYkS498yWVgETiJIoorXdzphzM7e5vb273Z5/e+Y733zn3DNnZhFGaUqpNgBYDQCbiWj+KMOHwXE0BEqpKxHxE2vt8QBwhIhOGU18GrZiAVLKKbw5AJzORIi4PAiCpWmkjY2NZxeLxWmIOA0A+hCxw1q7i4j8JL4iAfl8vkkIwZvXO4LVRLQobXMp5UuIeF+JyrxNRLfF10YUUFdXd1Ymk/kYAM5xma8NgmBucoP6+vqJVVVVX8dElvo6h4UQM3zf/ynkK/cNm5ubx/X3968HgEscrj2TybTt2bOnLx7nKvRzzPclAGy01vYIIYrGmBwiLgCA5gjT19c3tqenp7ekgNbW1uOOHj3KmV/ngnb09/e3dXd3H4pvnsvlxmSz2X8jHyK+HATB/cnEWlpaTujt7d0ZibDWvqK1XlhSgFLqfQC42RFx88xOayKlVD8AZBzuRSJ6oFxVlVLM5TnM7akClFKvAcCdDnTIGNNWKBR2JImVUocB4DTnX0dEt4x0LPP5/FQhxDbGWWvfGCZASrkKEaMS8rduI6L2lM0DAFDOv4WILhtp82hdKfUjALQAwNYhAqSUTyPi4Nm21s7VWq9N2ZyrMcX5vyeiCyrdnHFKqTcBYB4A/D4oQCnFzbYxRrSIiHjkDjGlFFfjWlfC3VrrySmYUxHRC4Jga5qwmIAjcQFbouNmrV2qtV6eQszVuNX5u6qrq1s6Ozv/ieOUUtcDwAbnu4GI4kmF7tgn2BkKUEo9CgArXFabtNZhhglirsZC5zsohLjC932KY1yD8eYns98Yc3mhUOhI8PBM4WS5Cd/BfD5/rhCCHSeWCvI87xlr7eOO6IgQYo7v+0niBpd5ncOtIKIoZlCDUoorEs2WZaiUuhsA1jACEVcGQfBQQjFfvx85Hw+cOclTUVtbOz6TyWxAxFbHkzqMlFI8I1a67LfX1NRcygIGS1tVVTV57969uxMCvgWAi13QHK31h/H1pqambLFY5LLPcP7Xieiu5CfM5/PThRB8V4RmrZ2ptd6Anudts9ZOBYDfiKgm5dsfAAD2txMRN9gQk1KuQ8SbnDMV43letbX2r1jgU0T0RFgtpdR+AJiAiJ8GQXBjigDu8rEAsIqIliSq8yoA8CXDGemampqmjo6OYgqHjWX+vNb6keg3C4gWnySiZSnB4dRCxO1BEFwUrUspn0PEh91vUywWx+3bt+/PlAodQ0R+QbENS4IFHASAMwFgPRHNTiEYHM3W2k5E/MwNomgScsgEImKeIaaU6gGASc75FhHdkcSglHKX694eIqpNAnK53EnZbJabJ3yQJE0Icb7v+50pwiNeXip5V3AFornMx7AuCILuJFljY+MZxphXrbWzYms9xpj5yUHD657nbbLWXu2wvxBRLk08+/gU3MuPAwdYQkSrSoEbGhpyxWKRXze/WmsPFgqF/1Iyj58KIKKyry6ehOcJIbYDQBYAjgkhJvm+/0cpEeX8SikeMoMPEmPMmDSRcY5Qned5L1hrH3QLnxNRVL6KdUgpF/NzLAoYGBgY39XVxQ+WshYKyOfzE4QQ3wBAOMeNMdcUCoXNIwVH61LKeYjIvRTawMCA7OrqKlQSH7+O+Tn1XizoMSJ6thwJ94QxhicaPy5CK3UqSvEMaRClFA+icEQ6+woRP7DW/kBE30VOd+1eCACLAWCww621V2mtv6gk8wgzrENTRETYv/nvFSLyAOLRPMSstfdorcNbdTSWekSklDOFEAsS574U7xohxJq0YVSJkLJntKGhYaoxZhYiTrfWTuSRCwAHEHG/MeZdY0x7pc1WSsz/dKxRDlfOjJgAAAAASUVORK5CYII=);
+                width: 32px;
+                height: 32px;
+                background-size: cover;
+                position: absolute;
+                cursor: pointer;
+                right: 0;
+                top: -16px;
+            }
+        </style>
+        <script type="text/javascript">
+            function Editor(editor) {
+                if (editor instanceof HTMLElement) {
+                    this.replaceSelection = function (text) {
+                        insertTextAtCursor(editor, text);
+                    }
+                } else if (typeof editor.replaceSelection !== "undefined") {
+                    this.replaceSelection = function (text) {
+                        editor.replaceSelection(text);
+                    }
+                } else if (typeof editor.insertAtCursor !== "undefined") {
+                    this.replaceSelection = function (text) {
+                        editor.insertAtCursor(text);
+                    }
+                } else if (typeof editor.updateValue !== "undefined") {
+                    this.replaceSelection = function (text) {
+                        editor.updateValue(text);
+                    }
+                } else if (typeof editor.setContent !== "undefined") {
+                    this.replaceSelection = function (text) {
+                        editor.execCommand('inserthtml', text);
+                    }
+                } else {
+                    this.replaceSelection = function (text) {
+                        alert("不支持你编辑器，请禁用查插件")
+                    }
+                }
+            }
+
+            function insertTextAtCursor(insertField, insertValue) {
+                //IE 浏览器
+                if (document.selection) {
+                    let sel;
+                    insertField.focus();
+                    sel = document.selection.createRange();
+                    sel.text = insertValue;
+                    sel.select();
+                }
+                //FireFox、Chrome等
+                else if (insertField.selectionStart || insertField.selectionStart == '0') {
+                    let startPos = insertField.selectionStart;
+                    let endPos = insertField.selectionEnd;
+                    // 保存滚动条
+                    let restoreTop = insertField.scrollTop;
+                    insertField.value = insertField.value.substring(0, startPos) + insertValue + insertField.value.substring(endPos, insertField.value.length);
+                    if (restoreTop > 0) {
+                        insertField.scrollTop = restoreTop;
+                    }
+                    insertField.selectionStart = startPos + insertValue.length;
+                    insertField.selectionEnd = startPos + insertValue.length;
+                    insertField.focus();
+                } else {
+                    insertField.value += insertValue;
+                    insertField.focus();
+                }
+            }
+
+            let AccFreeEditor;
+            if (typeof window.XEditor !== "undefined") {
+                AccFreeEditor = new Editor(window.XEditor);
+            } else if (typeof window.postEditormd !== "undefined") {
+                AccFreeEditor = new Editor(window.postEditormd);
+            } else if (typeof window.vditor !== "undefined") {
+                AccFreeEditor = new Editor(window.vditor);
+            } else if (typeof window.ue1 !== "undefined") {
+                AccFreeEditor = new Editor(window.ue1);
+            } else {
+                AccFreeEditor = new Editor($("#text")[0]);
+            }
+            $(document).ready(function () {
+                function addInsertLink(el) {
+                    let name = $('.insert', el).html();
+                    let html = '<i title="<?php _e("Accessories:插入附件[");?>' + name + ']" class="accessories" href="#"></i>';
+                    if (!($('.accessories', el).length > 0)) {
+                        $('.info', el).append(html);
+                    }
+                }
+
+                $('#file-list li').each(function () {
+                    addInsertLink(this);
+                });
+                $('#file-list li .accessories').on('click', function () {
+                    let t = $(this), pp = t.parent().parent(), a = $('.insert', pp);
+                    if (pp.data('image') == 0) {
+                        AccFreeEditor.replaceSelection('[attach]' + pp.data('cid') + '[/attach]');
+                    } else {
+                        AccFreeEditor.replaceSelection('![' + a.text() + '](' + pp.data('url') + ')');
+                    }
+                });
+                Typecho.uploadComplete = function (file) {
+                    $('#file-list li').each(function () {
+                        addInsertLink(this);
                     });
-					Typecho.uploadComplete = function (file) {
-                        $('#file-list li').each(function () {
-                            addInsertLink(this);
-                        });
-                    };
-				});
-			</script>
-			<?php
-}
+                };
+            });
+        </script>
+        <?php
+    }
 }
