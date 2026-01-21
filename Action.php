@@ -16,7 +16,7 @@ class Accessories_Action extends Typecho_Widget implements Widget_Interface_Do
         $options = Typecho_Widget::widget('Widget_Options');
         if ($this->request->filter('int')->cid) {
             $cid = $this->request->filter('int')->cid;
-            Typecho_Db::get()->fetchRow(Typecho_Db::get()->select()->from('table.contents')
+            $db->fetchRow(Typecho_Db::get()->select()->from('table.contents')
                 ->where('table.contents.type = ?', 'attachment')
                 ->where('table.contents.cid = ?', $cid)
                 ->limit(1), array($this, 'push'));
@@ -24,7 +24,7 @@ class Accessories_Action extends Typecho_Widget implements Widget_Interface_Do
             if (!$this->have()) {
                 throw new Typecho_Widget_Exception("附件文件不存在或无法读入，请与管理员联系。");
             }
-            $info = unserialize($this->text);
+            $info = Accessories_Plugin::tryDeserialize($this->text);
             if ($options->plugin('Accessories')->useBuildInStat) {
                 Accessories_Plugin::viewStat($cid);
             } else if (isset($options->plugins['activated']['Stat'])) {

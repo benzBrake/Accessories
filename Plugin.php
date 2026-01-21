@@ -5,11 +5,14 @@
  *
  * @package Accessories
  * @author Ryan
- * @version 1.0.8
+ * @version 1.0.9
  * @dependence 9.9.2-*
  * @link https://doufu.ru
  *
  * 历史版本
+ * version 1.1.0 at 2026-01-22
+ * 修复 setField Non-static method 错误
+ * 适配 Typecho 1.3.0
  * version 1.0.8 at 2023-05-01
  * 支持多种编辑器
  * 支持图片短代码，换域名以后再也不怕图片链接不对啦
@@ -237,7 +240,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
      * @access public
      * @return integer
      */
-    public function setField($name, $type, $value, $cid)
+    public static function setField($name, $type, $value, $cid)
     {
         $db = Typecho_Db::get();
         if (empty($name) || !in_array($type, array('str', 'int', 'float'))) {
@@ -429,4 +432,11 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         </script>
         <?php
     }
+
+    public static function tryDeserialize($value)
+    {
+        $isSerialized = strpos($value, 'a:') === 0 || $value === 'b:0;';
+        return $isSerialized ? @unserialize($value) : json_decode($value, true);
+    }
+    
 }
