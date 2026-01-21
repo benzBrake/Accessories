@@ -90,9 +90,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
      * @param Typecho_Widget_Helper_Form $form
      * @return void
      */
-    public static function personalConfig(Typecho_Widget_Helper_Form $form)
-    {
-    }
+    public static function personalConfig(Typecho_Widget_Helper_Form $form) {}
 
     /**
      * 插入 CSS
@@ -302,7 +300,6 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
                 if ($editorChoice === "vditor") {
                     $insertAll = 'false';
                     $htmlSource = str_replace('document.getElementById("btn-save").onclick', 'window.vditor = vditor; document.getElementById("btn-save").onclick', $htmlSource);
-
                 }
             }
             if (self::isPluginEnabled("UEditor")) {
@@ -312,7 +309,7 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
             print $htmlSource;
             ob_end_flush();
         }
-        ?>
+?>
         <style>
             #file-list .info {
                 position: relative;
@@ -327,9 +324,11 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
                 right: 0;
                 top: -16px;
             }
+
             #file-list li[data-image="0"] .accessories {
                 background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cGF0aCBkPSJNMTQgMTMuNVY4QzE0IDUuNzkwODYgMTIuMjA5MSA0IDEwIDRDNy43OTA4NiA0IDYgNS43OTA4NiA2IDhWMTMuNUM2IDE3LjA4OTkgOC45MTAxNSAyMCAxMi41IDIwQzE2LjA4OTkgMjAgMTkgMTcuMDg5OSAxOSAxMy41VjRIMjFWMTMuNUMyMSAxOC4xOTQ0IDE3LjE5NDQgMjIgMTIuNSAyMkM3LjgwNTU4IDIyIDQgMTguMTk0NCA0IDEzLjVWOEM0IDQuNjg2MjkgNi42ODYyOSAyIDEwIDJDMTMuMzEzNyAyIDE2IDQuNjg2MjkgMTYgOFYxMy41QzE2IDE1LjQzMyAxNC40MzMgMTcgMTIuNSAxN0MxMC41NjcgMTcgOSAxNS40MzMgOSAxMy41VjhIMTFWMTMuNUMxMSAxNC4zMjg0IDExLjY3MTYgMTUgMTIuNSAxNUMxMy4zMjg0IDE1IDE0IDE0LjMyODQgMTQgMTMuNVoiPjwvcGF0aD48L3N2Zz4=");
             }
+
             #file-list li[data-image="1"] .accessories {
                 background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cGF0aCBkPSJNMi45OTE4IDIxQzIuNDQ0MDUgMjEgMiAyMC41NTUxIDIgMjAuMDA2NlYzLjk5MzRDMiAzLjQ0NDc2IDIuNDU1MzEgMyAyLjk5MTggM0gyMS4wMDgyQzIxLjU1NiAzIDIyIDMuNDQ0OTUgMjIgMy45OTM0VjIwLjAwNjZDMjIgMjAuNTU1MiAyMS41NDQ3IDIxIDIxLjAwODIgMjFIMi45OTE4Wk0yMCAxNVY1SDRWMTlMMTQgOUwyMCAxNVpNMjAgMTcuODI4NEwxNCAxMS44Mjg0TDYuODI4NDMgMTlIMjBWMTcuODI4NFpNOCAxMUM2Ljg5NTQzIDExIDYgMTAuMTA0NiA2IDlDNiA3Ljg5NTQzIDYuODk1NDMgNyA4IDdDOS4xMDQ1NyA3IDEwIDcuODk1NDMgMTAgOUMxMCAxMC4xMDQ2IDkuMTA0NTcgMTEgOCAxMVoiPjwvcGF0aD48L3N2Zz4=");
             }
@@ -337,27 +336,27 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         <script type="text/javascript">
             function Editor(editor) {
                 if (editor instanceof HTMLElement) {
-                    this.replaceSelection = function (text) {
+                    this.replaceSelection = function(text) {
                         insertTextAtCursor(editor, text);
                     }
                 } else if (typeof editor.replaceSelection !== "undefined") {
-                    this.replaceSelection = function (text) {
+                    this.replaceSelection = function(text) {
                         editor.replaceSelection(text);
                     }
                 } else if (typeof editor.insertAtCursor !== "undefined") {
-                    this.replaceSelection = function (text) {
+                    this.replaceSelection = function(text) {
                         editor.insertAtCursor(text);
                     }
                 } else if (typeof editor.updateValue !== "undefined") {
-                    this.replaceSelection = function (text) {
+                    this.replaceSelection = function(text) {
                         editor.updateValue(text);
                     }
                 } else if (typeof editor.setContent !== "undefined") {
-                    this.replaceSelection = function (text) {
+                    this.replaceSelection = function(text) {
                         editor.execCommand('inserthtml', text);
                     }
                 } else {
-                    this.replaceSelection = function (text) {
+                    this.replaceSelection = function(text) {
                         alert("不支持你编辑器，请禁用查插件")
                     }
                 }
@@ -403,34 +402,47 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
             } else {
                 AccFreeEditor = new Editor($("#text")[0]);
             }
-            $(document).ready(function () {
+            $(document).ready(function() {
                 function addInsertLink(el) {
                     let name = $('.insert', el).html();
-                    let html = '<i title="<?php _e("Accessories:插入附件[");?>' + name + ']" class="accessories" href="#"></i>';
+                    let html = '<i title="<?php _e("Accessories:插入附件["); ?>' + name + ']" class="accessories" href="#"></i>';
                     if (!($('.accessories', el).length > 0)) {
                         $('.info', el).append(html);
                     }
                 }
 
-                $('#file-list li').each(function () {
+                // 初始化已有的 li
+                $('#file-list li').each(function() {
                     addInsertLink(this);
                 });
-                $('#file-list li .accessories').on('click', function () {
-                    let t = $(this), pp = t.parent().parent(), a = $('.insert', pp);
+
+
+                $('#file-list li .accessories').on('click', function() {
+                    let t = $(this),
+                        pp = t.parent().parent(),
+                        a = $('.insert', pp);
                     if (pp.data('image') == 0) {
                         AccFreeEditor.replaceSelection('[attach]' + pp.data('cid') + '[/attach]');
                     } else {
                         AccFreeEditor.replaceSelection('[image]' + pp.data('cid') + '[/image]');
                     }
                 });
-                Typecho.uploadComplete = function (file) {
-                    $('#file-list li').each(function () {
-                        addInsertLink(this);
-                    });
-                };
+
+                setTimeout(function() {
+                    const org = Typecho.uploadComplete;
+                    Typecho.uploadComplete = function(file) {
+                        if (file && file.cid) {
+                            let target = $('#file-list li input[value="' + file.cid + '"]').parents('li');
+                            if (target.length > 0) {
+                                target.attr('data-image', file.isImage ? 1 : 0);
+                                addInsertLink(target[0]);
+                            }
+                        }
+                    }
+                }, 500);
             });
         </script>
-        <?php
+<?php
     }
 
     public static function tryDeserialize($value)
@@ -438,5 +450,4 @@ class Accessories_Plugin implements Typecho_Plugin_Interface
         $isSerialized = strpos($value, 'a:') === 0 || $value === 'b:0;';
         return $isSerialized ? @unserialize($value) : json_decode($value, true);
     }
-    
 }
